@@ -57,7 +57,7 @@ def grdmask(
         - **Point coverage mode**: Data points (used with ``search_radius`` parameter)
     $outgrid
     $spacing
-    mask_values : list of float, optional
+    mask_values
         Set the values that will be assigned to nodes. Provide three values in the form
         [*outside*, *edge*, *inside*]. Default is ``[0, 0, 1]``, meaning nodes outside
         and on the edge are set to 0, and nodes inside are set to 1.
