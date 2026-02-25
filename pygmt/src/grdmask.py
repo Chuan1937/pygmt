@@ -26,7 +26,7 @@ def grdmask(
     | bool = False,
     **kwargs,
 ) -> xr.DataArray | None:
-    r"""
+    """
     Create mask grid from polygons or point coverage.
 
     Reads one or more files (or standard input) containing polygon or data point
