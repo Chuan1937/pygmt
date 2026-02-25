@@ -41,10 +41,10 @@ def grdmask(
     Full GMT docs at :gmt-docs:`grdmask.html`.
 
     **Aliases**
-    
+
     .. hlist::
        :columns: 3
-       
+
        - G = outgrid
        - I = spacing
        - N = mask_values
@@ -88,6 +88,13 @@ def grdmask(
     >>> polygon = np.array([[125, 30], [130, 30], [130, 35], [125, 30]])
     >>> # Create a mask grid with 1 arc-degree spacing
     >>> mask = pygmt.grdmask(data=polygon, spacing=1, region=[125, 130, 30, 35])
+    >>> mask.values
+    array([[0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 1., 0.],
+           [0., 0., 1., 1., 1., 0.],
+           [0., 0., 1., 1., 1., 0.],
+           [0., 0., 1., 1., 1., 0.],
+           [0., 0., 0., 0., 0., 0.]])
     """
     if spacing is None or region is None:
         raise GMTParameterError(required=["region", "spacing"])
