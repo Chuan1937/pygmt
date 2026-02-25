@@ -40,7 +40,11 @@ def grdmask(
 
     Full GMT docs at :gmt-docs:`grdmask.html`.
 
-    $aliases
+    **Aliases**
+    
+    .. hlist::
+       :columns: 3
+       
        - G = outgrid
        - I = spacing
        - N = mask_values
