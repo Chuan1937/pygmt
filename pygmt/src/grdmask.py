@@ -21,9 +21,9 @@ def grdmask(
     outgrid: PathLike | None = None,
     spacing: Sequence[float | str] | None = None,
     region: Sequence[float | str] | str | None = None,
-    outside: float | str = 0,
-    edge: float | str = 0,
-    inside: float | str = 1,
+    outside: float | Literal["z", "id"] = 0,
+    edge: float | Literal["z", "id"] = 0,
+    inside: float | Literal["z", "id"] = 1,
     verbose: Literal["quiet", "error", "warning", "timing", "info", "compat", "debug"]
     | bool = False,
     **kwargs,
@@ -66,12 +66,26 @@ def grdmask(
     outside
         Set the value assigned to nodes outside the polygons. Default is 0.
         Can be any number, or one of ``None``, ``"NaN"``, and ``np.nan`` for NaN.
+
+        When using ``inside="z"`` or ``inside="id"``, this sets the outside value
+        appended after the mode (e.g., ``outside=1, inside="z"`` gives ``-Nz/1``).
     edge
         Set the value assigned to nodes on the polygon edges. Default is 0.
         Can be any number, or one of ``None``, ``"NaN"``, and ``np.nan`` for NaN.
+
+        When using ``inside="z"``, setting ``edge="z"`` treats edges as inside
+        (corresponds to ``-NZ``). Similarly, ``inside="id", edge="id"`` gives ``-NP``.
+        The combination ``inside="z", edge="id"`` or ``inside="id", edge="z"`` is
+        invalid and will raise an error.
     inside
         Set the value assigned to nodes inside the polygons. Default is 1.
         Can be any number, or one of ``None``, ``"NaN"``, and ``np.nan`` for NaN.
+
+        Special values:
+
+        - ``"z"``: Use the z-value from polygon data (segment header ``-Zzval``,
+          ``-Lheader``, or via ``-aZ=name``). Corresponds to GMT ``-Nz``.
+        - ``"id"``: Use a running polygon ID number. Corresponds to GMT ``-Np``.
     $region
     $verbose
 
@@ -103,10 +117,43 @@ def grdmask(
     if spacing is None or region is None:
         raise GMTParameterError(required=["region", "spacing"])
 
-    aliasdict = AliasSystem(
-        I=Alias(spacing, name="spacing", sep="/", size=2),
-        N=Alias([outside, edge, inside], name="mask_values", sep="/", size=3),
-    ).add_common(
+    # Build the -N parameter string
+    special_modes = {"z", "id"}
+    inside_is_special = inside in special_modes
+    edge_is_special = edge in special_modes
+
+    # Validate combinations
+    if inside_is_special and edge_is_special and inside != edge:
+        msg = f"Invalid combination: inside={inside!r} and edge={edge!r}. "
+        raise GMTParameterError(
+            reason=msg + "When both are special modes, they must be the same."
+        )
+
+    # Build -N argument
+    if inside_is_special:
+        # Mode: -Nz, -NZ, -Np, or -NP
+        mode_char = (
+            "Z"
+            if edge == inside
+            else "z"
+            if inside == "z"
+            else "P"
+            if edge == inside
+            else "p"
+        )
+        n_value = f"{mode_char}/{outside}" if outside != 0 else mode_char
+        aliasdict = AliasSystem(
+            I=Alias(spacing, name="spacing", sep="/", size=2),
+            N=n_value,
+        )
+    else:
+        # Standard mode: outside/edge/inside
+        aliasdict = AliasSystem(
+            I=Alias(spacing, name="spacing", sep="/", size=2),
+            N=Alias([outside, edge, inside], name="mask_values", sep="/", size=3),
+        )
+
+    aliasdict = aliasdict.add_common(
         R=region,
         V=verbose,
     )

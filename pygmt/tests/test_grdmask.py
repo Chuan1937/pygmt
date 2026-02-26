@@ -107,3 +107,17 @@ def test_grdmask_fails():
     """
     with pytest.raises(GMTParameterError):
         grdmask(data=np.array([[0, 0], [1, 1], [1, 0], [0, 0]]))
+
+
+def test_grdmask_invalid_combination(polygon_data):
+    """
+    Check that grdmask fails when inside and edge have different special modes.
+    """
+    with pytest.raises(GMTParameterError):
+        grdmask(
+            data=polygon_data,
+            spacing=1,
+            region=[125, 130, 30, 35],
+            inside="z",
+            edge="id",
+        )
