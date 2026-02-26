@@ -21,7 +21,9 @@ def grdmask(
     outgrid: PathLike | None = None,
     spacing: Sequence[float | str] | None = None,
     region: Sequence[float | str] | str | None = None,
-    mask_values: Sequence[float] | None = None,
+    outside: float | str = 0,
+    edge: float | str = 0,
+    inside: float | str = 1,
     verbose: Literal["quiet", "error", "warning", "timing", "info", "compat", "debug"]
     | bool = False,
     **kwargs,
@@ -32,7 +34,7 @@ def grdmask(
     Reads one or more files (or standard input) containing polygon or data point
     coordinates, and creates a binary grid file where nodes that fall inside, on the
     edge, or outside the polygons (or within the search radius from data points) are
-    assigned values based on ``mask_values``.
+    assigned values based on ``outside``, ``edge``, and ``inside`` parameters.
 
     The mask grid can be used to mask out specific regions in other grids using
     :func:`pygmt.grdmath` or similar tools. For masking based on coastline features,
@@ -47,7 +49,7 @@ def grdmask(
 
        - G = outgrid
        - I = spacing
-       - N = mask_values
+       - N = outside/edge/inside
        - R = region
        - V = verbose
 
@@ -61,13 +63,15 @@ def grdmask(
         - **Point coverage mode**: Data points (used with ``search_radius`` parameter)
     $outgrid
     $spacing
-    mask_values
-        Set the values that will be assigned to nodes. Provide three values in the form
-        [*outside*, *edge*, *inside*]. Default is ``[0, 0, 1]``, meaning nodes outside
-        and on the edge are set to 0, and nodes inside are set to 1.
-
-        Values can be any number, or one of ``None``, ``"NaN"``, and ``np.nan`` for
-        setting nodes to NaN.
+    outside
+        Set the value assigned to nodes outside the polygons. Default is 0.
+        Can be any number, or one of ``None``, ``"NaN"``, and ``np.nan`` for NaN.
+    edge
+        Set the value assigned to nodes on the polygon edges. Default is 0.
+        Can be any number, or one of ``None``, ``"NaN"``, and ``np.nan`` for NaN.
+    inside
+        Set the value assigned to nodes inside the polygons. Default is 1.
+        Can be any number, or one of ``None``, ``"NaN"``, and ``np.nan`` for NaN.
     $region
     $verbose
 
@@ -101,7 +105,7 @@ def grdmask(
 
     aliasdict = AliasSystem(
         I=Alias(spacing, name="spacing", sep="/", size=2),
-        N=Alias(mask_values, name="mask_values", sep="/", size=3),
+        N=Alias([outside, edge, inside], name="mask_values", sep="/", size=3),
     ).add_common(
         R=region,
         V=verbose,

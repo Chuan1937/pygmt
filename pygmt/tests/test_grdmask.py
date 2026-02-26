@@ -83,13 +83,15 @@ def test_grdmask_no_outgrid(polygon_data, expected_grid):
 
 def test_grdmask_custom_mask_values(polygon_data):
     """
-    Test grdmask with custom mask_values.
+    Test grdmask with custom outside, edge, inside values.
     """
     result = grdmask(
         data=polygon_data,
         spacing=1,
         region=[125, 130, 30, 35],
-        mask_values=[10, 20, 30],  # outside, edge, inside
+        outside=10,
+        edge=20,
+        inside=30,
     )
     assert isinstance(result, xr.DataArray)
     # Check that the grid has the right dimensions
