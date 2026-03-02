@@ -15,6 +15,78 @@ from pygmt.helpers import build_arg_list, fmt_docstring
 __doctest_skip__ = ["grdmask"]
 
 
+def _alias_option_N(  # noqa: N802
+    outside: float | Literal["z", "id"] = 0,
+    edge: float | Literal["z", "id"] = 0,
+    inside: float | Literal["z", "id"] = 1,
+) -> Alias:
+    """
+    Return an Alias object for the -N option.
+
+    Builds the -N parameter string for grdmask based on the inside, edge, and
+    outside values. Handles special modes "z" (use z-value from polygon data)
+    and "id" (use running polygon ID).
+
+    Parameters
+    ----------
+    outside
+        Set the value assigned to nodes outside the polygons. Default is 0.
+    edge
+        Set the value assigned to nodes on the polygon edges. Default is 0.
+    inside
+        Set the value assigned to nodes inside the polygons. Default is 1.
+
+    Returns
+    -------
+    Alias
+        An Alias object representing the -N option value.
+
+    Raises
+    ------
+    GMTParameterError
+        If inside and edge are both special modes but different values.
+
+    Examples
+    --------
+    >>> _alias_option_N()._value
+    '0/0/1'
+    >>> _alias_option_N(outside=1, edge=1, inside=1)._value
+    '1/1/1'
+    >>> _alias_option_N(inside="z")._value
+    'z'
+    >>> _alias_option_N(inside="z", outside=1)._value
+    'z/1'
+    >>> _alias_option_N(inside="z", edge="z")._value
+    'Z'
+    >>> _alias_option_N(inside="id")._value
+    'p'
+    >>> _alias_option_N(inside="id", edge="id")._value
+    'P'
+    """
+    special_modes = {"z", "id"}
+    inside_is_special = inside in special_modes
+    edge_is_special = edge in special_modes
+
+    # Validate combinations
+    if inside_is_special and edge_is_special and inside != edge:
+        msg = f"Invalid combination: inside={inside!r} and edge={edge!r}. "
+        raise GMTParameterError(
+            reason=msg + "When both are special modes, they must be the same."
+        )
+
+    # Build -N argument
+    if inside_is_special:
+        # Mode: -Nz, -NZ, -Np, or -NP
+        if edge == inside:
+            mode_char = "Z" if inside == "z" else "P"
+        else:
+            mode_char = "z" if inside == "z" else "p"
+        n_value = f"{mode_char}/{outside}" if outside != 0 else mode_char
+        return Alias(n_value, name="mask_values")
+    # Standard mode: outside/edge/inside
+    return Alias([outside, edge, inside], name="mask_values", sep="/", size=3)
+
+
 @fmt_docstring
 def grdmask(
     data,
@@ -117,41 +189,10 @@ def grdmask(
     if spacing is None or region is None:
         raise GMTParameterError(required=["region", "spacing"])
 
-    # Build the -N parameter string
-    special_modes = {"z", "id"}
-    inside_is_special = inside in special_modes
-    edge_is_special = edge in special_modes
-
-    # Validate combinations
-    if inside_is_special and edge_is_special and inside != edge:
-        msg = f"Invalid combination: inside={inside!r} and edge={edge!r}. "
-        raise GMTParameterError(
-            reason=msg + "When both are special modes, they must be the same."
-        )
-
-    # Build -N argument
-    if inside_is_special:
-        # Mode: -Nz, -NZ, -Np, or -NP
-        mode_char = (
-            "Z"
-            if edge == inside
-            else "z"
-            if inside == "z"
-            else "P"
-            if edge == inside
-            else "p"
-        )
-        n_value = f"{mode_char}/{outside}" if outside != 0 else mode_char
-        aliasdict = AliasSystem(
-            I=Alias(spacing, name="spacing", sep="/", size=2),
-            N=n_value,
-        )
-    else:
-        # Standard mode: outside/edge/inside
-        aliasdict = AliasSystem(
-            I=Alias(spacing, name="spacing", sep="/", size=2),
-            N=Alias([outside, edge, inside], name="mask_values", sep="/", size=3),
-        )
+    aliasdict = AliasSystem(
+        I=Alias(spacing, name="spacing", sep="/", size=2),
+        N=_alias_option_N(outside=outside, edge=edge, inside=inside),
+    )
 
     aliasdict = aliasdict.add_common(
         R=region,
