@@ -27,25 +27,6 @@ def _alias_option_N(  # noqa: N802
     outside values. Handles special modes "z" (use z-value from polygon data)
     and "id" (use running polygon ID).
 
-    Parameters
-    ----------
-    outside
-        Set the value assigned to nodes outside the polygons. Default is 0.
-    edge
-        Set the value assigned to nodes on the polygon edges. Default is 0.
-    inside
-        Set the value assigned to nodes inside the polygons. Default is 1.
-
-    Returns
-    -------
-    Alias
-        An Alias object representing the -N option value.
-
-    Raises
-    ------
-    GMTParameterError
-        If inside and edge are both special modes but different values.
-
     Examples
     --------
     >>> _alias_option_N()._value
