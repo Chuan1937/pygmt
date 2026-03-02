@@ -63,7 +63,7 @@ def _alias_option_N(  # noqa: N802
     >>> _alias_option_N(inside="id", edge="id")._value
     'P'
     """
-    special_modes = {"z", "id"}
+    special_modes = {"z": "z", "id": "p"}
     inside_is_special = inside in special_modes
     edge_is_special = edge in special_modes
 
