@@ -77,10 +77,9 @@ def _alias_option_N(  # noqa: N802
     # Build -N argument
     if inside_is_special:
         # Mode: -Nz, -NZ, -Np, or -NP
+        mode_char = special_modes[inside]
         if edge == inside:
-            mode_char = "Z" if inside == "z" else "P"
-        else:
-            mode_char = "z" if inside == "z" else "p"
+            mode_char = mode_char.upper()
         n_value = f"{mode_char}/{outside}" if outside != 0 else mode_char
         return Alias(n_value, name="mask_values")
     # Standard mode: outside/edge/inside
